@@ -1,0 +1,44 @@
+name: NodeJS Cache Workflow
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Cache NPM Dependencies
+        id: cache-npm
+        uses: actions/cache@v5
+        with:
+          path: ./node_modules
+          key: npm-cache-${{ hashFiles('package-lock.json') }}
+          
+
+      - name: Install Dependencies
+        if: steps.cache-npm.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Cache Hit Message
+        if: steps.cache-npm.outputs.cache-hit == 'true'
+        run: echo "Dependencies restored from cache"
+
+      - name: Build Application
+        run: npm run build
+
+      - uses: actions/upload-artifact@v7
+        with:
+    
+          name: myjsbuild
+          path: build
